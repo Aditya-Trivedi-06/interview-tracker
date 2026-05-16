@@ -1,0 +1,17 @@
+{
+  "name": "FAANG Intensive Tracker",
+  "short_name": "FAANG Prep",
+  "description": "High-intensity DSA & System Design Interview Preparation Suite",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#121212",
+  "theme_color": "#000000",
+  "icons": [
+    {
+      "src": "https://img.icons8.com/fluency/512/rocket.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
