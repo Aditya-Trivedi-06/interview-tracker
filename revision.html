@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Revision Cards</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <title>Revision Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <style>
         :root {
             --bg: #0a0a0a;
@@ -14,9 +15,10 @@
             --accent: #bb86fc;
             --text: #e0e0e0;
             --text-dim: #9e9e9e;
+            --sidebar-w: 280px;
         }
 
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
         body {
             background: var(--bg);
             color: var(--text);
@@ -24,62 +26,123 @@
             margin: 0;
             padding: 0;
             display: flex;
-            flex-direction: column;
             height: 100vh;
             overflow: hidden;
         }
 
-        header {
+        /* SIDEBAR */
+        .sidebar {
+            width: var(--sidebar-w);
+            background: #111;
+            border-right: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            z-index: 1000;
+            transform: translateX(-100%);
+        }
+        .sidebar.active { transform: translateX(0); }
+
+        .sidebar-header {
             padding: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .search-box {
+            background: rgba(255,255,255,0.05);
+            border: none;
+            border-radius: 8px;
+            padding: 10px 15px;
+            color: white;
+            width: 100%;
+            font-size: 0.9rem;
+        }
+
+        .problem-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+        .problem-item {
+            padding: 12px 15px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            color: var(--text-dim);
+            cursor: pointer;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .problem-item:hover, .problem-item.active {
+            background: rgba(187, 134, 252, 0.1);
+            color: var(--accent);
+        }
+
+        /* MAIN CONTENT */
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            z-index: 1;
+        }
+
+        header {
+            padding: 15px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            background: #111;
             border-bottom: 1px solid rgba(255,255,255,0.05);
         }
 
-        h1 { margin: 0; font-size: 1.2rem; font-weight: 800; letter-spacing: -0.5px; }
-        
-        .company-filter {
-            padding: 15px;
+        .menu-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            padding: 0;
+            margin-right: 15px;
+        }
+
+        .controls {
+            padding: 10px 20px;
+            background: #0d0d0d;
             display: flex;
             gap: 10px;
             overflow-x: auto;
-            white-space: nowrap;
-            -ms-overflow-style: none;
-            scrollbar-width: none;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
         }
-        .company-filter::-webkit-scrollbar { display: none; }
-        
-        .chip {
-            padding: 8px 16px;
+        .controls::-webkit-scrollbar { display: none; }
+
+        select {
             background: var(--card);
-            border-radius: 20px;
-            font-size: 0.85rem;
+            color: var(--text);
             border: 1px solid rgba(255,255,255,0.1);
-            color: var(--text-dim);
-        }
-        .chip.active {
-            background: var(--accent);
-            color: #000;
-            font-weight: 600;
-            border-color: var(--accent);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
         }
 
         .cards-container {
             flex: 1;
-            padding: 15px;
+            padding: 20px;
             overflow-y: auto;
-            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
         }
 
         .rev-card {
             background: var(--card);
             border-radius: 20px;
             padding: 24px;
-            margin-bottom: 20px;
+            margin-bottom: 30px;
             border: 1px solid rgba(255,255,255,0.05);
-            scroll-snap-align: start;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            position: relative;
         }
 
         .card-header {
@@ -89,164 +152,227 @@
             margin-bottom: 16px;
         }
 
+        .badge-group { display: flex; gap: 6px; }
         .badge {
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             text-transform: uppercase;
             font-weight: 800;
-            padding: 4px 8px;
-            background: rgba(255,255,255,0.05);
-            border-radius: 4px;
+            padding: 4px 10px;
+            background: rgba(187, 134, 252, 0.1);
+            border-radius: 6px;
             color: var(--accent);
         }
+        .badge.diff { background: rgba(255,255,255,0.05); color: #9e9e9e; }
 
-        .freq { font-size: 0.75rem; color: var(--text-dim); }
-
-        .title { font-size: 1.4rem; font-weight: 700; margin-bottom: 8px; }
-        .question { font-size: 0.95rem; line-height: 1.6; color: var(--text-dim); margin-bottom: 20px; }
+        .title { font-size: 1.3rem; font-weight: 800; margin-bottom: 10px; line-height: 1.3; }
+        .question { font-size: 0.9rem; line-height: 1.6; color: var(--text-dim); margin-bottom: 24px; }
 
         .reveal-section {
-            margin-top: 15px;
-            background: rgba(255,255,255,0.03);
+            margin-top: 12px;
+            background: rgba(255,255,255,0.02);
             border-radius: 12px;
-            padding: 12px;
-            cursor: pointer;
+            padding: 16px;
+            border: 1px solid rgba(255,255,255,0.03);
         }
 
         .reveal-label {
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             font-weight: 800;
             color: var(--accent);
-            margin-bottom: 4px;
+            margin-bottom: 8px;
+            letter-spacing: 1px;
             display: flex;
             justify-content: space-between;
         }
 
         .reveal-content {
-            filter: blur(8px);
+            filter: blur(10px);
             transition: filter 0.3s;
             font-size: 0.9rem;
-            line-height: 1.5;
+            line-height: 1.6;
         }
 
-        .reveal-section.active .reveal-content {
-            filter: blur(0);
-        }
-
+        .reveal-section.active .reveal-content { filter: blur(0); }
         .reveal-section.topic .reveal-content { filter: none; display: none; }
         .reveal-section.topic.active .reveal-content { display: block; }
 
         .solved-btn {
-            margin-top: 20px;
+            margin-top: 24px;
             width: 100%;
-            padding: 12px;
-            border-radius: 10px;
+            padding: 15px;
+            border-radius: 12px;
             border: none;
             background: rgba(255,255,255,0.05);
             color: var(--text);
-            font-weight: 600;
-            transition: all 0.2s;
+            font-weight: 700;
+            font-size: 0.9rem;
+            letter-spacing: 0.5px;
         }
-        .solved-btn.active {
-            background: #4caf50;
-            color: white;
-        }
+        .solved-btn.active { background: #4caf50; color: white; }
 
-        .empty-state {
-            text-align: center;
-            padding: 50px 20px;
-            color: var(--text-dim);
+        /* OVERLAY */
+        .overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 999;
+            display: none;
+            backdrop-filter: blur(4px);
         }
+        .overlay.active { display: block; }
+
+        .empty-state { text-align: center; padding: 100px 20px; color: var(--text-dim); }
     </style>
 </head>
 <body>
-    <header>
-        <h1>⚡ REVISION</h1>
-        <div id="stats" style="font-size: 0.8rem; color: var(--accent)">0/307</div>
-    </header>
+    <div class="overlay" id="overlay"></div>
 
-    <div class="company-filter" id="filter">
-        <div class="chip active" data-comp="all">All</div>
-        <div class="chip" data-comp="Google">Google</div>
-        <div class="chip" data-comp="Amazon">Amazon</div>
-        <div class="chip" data-comp="Microsoft">Microsoft</div>
-        <div class="chip" data-comp="Apple">Apple</div>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <input type="text" class="search-box" id="search" placeholder="Search 307 problems...">
+        </div>
+        <div class="problem-list" id="problemList"></div>
+    </aside>
+
+    <div class="main">
+        <header>
+            <div style="display: flex; align-items: center;">
+                <button class="menu-btn" id="menuToggle">☰</button>
+                <h1>Revision Pro</h1>
+            </div>
+            <div id="stats" style="font-size: 0.75rem; font-weight: 700; color: var(--accent)">0/307</div>
+        </header>
+
+        <div class="controls">
+            <select id="compFilter">
+                <option value="all">All Companies</option>
+                <option value="Google">Google</option>
+                <option value="Amazon">Amazon</option>
+                <option value="Microsoft">Microsoft</option>
+                <option value="Apple">Apple</option>
+            </select>
+            <select id="sortOrder">
+                <option value="default">Default</option>
+                <option value="freq">By Frequency</option>
+                <option value="alpha">Alphabetical</option>
+            </select>
+        </div>
+
+        <div class="cards-container" id="container"></div>
     </div>
-
-    <div class="cards-container" id="container"></div>
 
     <script src="data_revision.js"></script>
     <script>
-        let currentFilter = 'all';
         let state = JSON.parse(localStorage.getItem('prepState')) || { solved: {} };
+        let currentFilter = 'all';
+        let currentSort = 'default';
+        let searchQuery = '';
+
+        const container = document.getElementById('container');
+        const problemList = document.getElementById('problemList');
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+
+        function toggleSidebar() {
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+        }
+
+        document.getElementById('menuToggle').onclick = toggleSidebar;
+        overlay.onclick = toggleSidebar;
 
         function render() {
-            const container = document.getElementById('container');
-            const filtered = currentFilter === 'all' 
-                ? REVISION_CARDS 
-                : REVISION_CARDS.filter(c => c.c === currentFilter);
+            let filtered = REVISION_CARDS;
+            
+            if (currentFilter !== 'all') {
+                filtered = filtered.filter(c => c.c === currentFilter);
+            }
+            
+            if (searchQuery) {
+                filtered = filtered.filter(c => c.t.toLowerCase().includes(searchQuery.toLowerCase()));
+            }
 
-            container.innerHTML = filtered.map((c, i) => `
-                <div class="rev-card">
+            if (currentSort === 'freq') {
+                filtered.sort((a,b) => b.f - a.f);
+            } else if (currentSort === 'alpha') {
+                filtered.sort((a,b) => a.t.localeCompare(b.t));
+            }
+
+            // Render Sidebar List
+            problemList.innerHTML = filtered.map(c => `
+                <div class="problem-item" onclick="jumpTo('${c.t}')">${c.t}</div>
+            `).join('');
+
+            // Render Cards
+            container.innerHTML = filtered.map(c => `
+                <div class="rev-card" id="card-${c.t.replace(/\s+/g, '-')}">
                     <div class="card-header">
-                        <span class="badge">${c.c}</span>
-                        <span class="freq">Freq: ${c.f}%</span>
+                        <div class="badge-group">
+                            <span class="badge">${c.c}</span>
+                            <span class="badge diff">${c.f}% Freq</span>
+                        </div>
                     </div>
                     <div class="title">${c.t}</div>
-                    <div class="question">${c.q || 'Problem description loading...'}</div>
+                    <div class="question">${c.q || 'Problem details coming soon...'}</div>
                     
                     <div class="reveal-section topic" onclick="this.classList.toggle('active')">
-                        <div class="reveal-label">REVEAL TOPIC <span>▼</span></div>
-                        <div class="reveal-content">${c.tp || 'Arrays, Strings'}</div>
+                        <div class="reveal-label">DOMAIN <span>VIEW</span></div>
+                        <div class="reveal-content" style="font-weight: 600;">${c.tp || 'Arrays & Strings'}</div>
                     </div>
 
                     <div class="reveal-section" onclick="this.classList.toggle('active')">
-                        <div class="reveal-label">OPTIMAL APPROACH <span>TAP TO REVEAL</span></div>
-                        <div class="reveal-content">${c.optimal || 'No data yet.'}</div>
+                        <div class="reveal-label">OPTIMAL LOGIC <span>TAP TO REVEAL</span></div>
+                        <div class="reveal-content">${c.optimal || 'No data.'}</div>
                     </div>
 
                     <div class="reveal-section" onclick="this.classList.toggle('active')">
-                        <div class="reveal-label">FOLLOW-UP <span>TAP TO REVEAL</span></div>
-                        <div class="reveal-content">${c.followup || 'No data yet.'}</div>
+                        <div class="reveal-label">INTERVIEW FOLLOW-UP <span>TAP TO REVEAL</span></div>
+                        <div class="reveal-content">${c.followup || 'No data.'}</div>
                     </div>
 
                     <button class="solved-btn ${state.solved[c.t] === 'solved' ? 'active' : ''}" 
                             onclick="toggleSolved('${c.t}', this)">
-                        ${state.solved[c.t] === 'solved' ? '✓ SOLVED' : 'MARK AS SOLVED'}
+                        ${state.solved[c.t] === 'solved' ? '✓ MASTERED' : 'MARK AS MASTERED'}
                     </button>
                 </div>
             `).join('');
 
             if (filtered.length === 0) {
-                container.innerHTML = '<div class="empty-state">No cards for this company.</div>';
+                container.innerHTML = '<div class="empty-state">No matching cards found.</div>';
             }
 
-            const solvedCount = REVISION_CARDS.filter(c => state.solved[c.t] === 'solved').length;
-            document.getElementById('stats').textContent = `${solvedCount}/${REVISION_CARDS.length}`;
+            updateStats();
+        }
+
+        function jumpTo(title) {
+            toggleSidebar();
+            const el = document.getElementById(`card-${title.replace(/\s+/g, '-')}`);
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
         function toggleSolved(title, btn) {
             if (state.solved[title] === 'solved') {
                 delete state.solved[title];
                 btn.classList.remove('active');
-                btn.textContent = 'MARK AS SOLVED';
+                btn.textContent = 'MARK AS MASTERED';
             } else {
                 state.solved[title] = 'solved';
                 btn.classList.add('active');
-                btn.textContent = '✓ SOLVED';
+                btn.textContent = '✓ MASTERED';
             }
             localStorage.setItem('prepState', JSON.stringify(state));
+            updateStats();
+        }
+
+        function updateStats() {
             const solvedCount = REVISION_CARDS.filter(c => state.solved[c.t] === 'solved').length;
             document.getElementById('stats').textContent = `${solvedCount}/${REVISION_CARDS.length}`;
         }
 
-        document.querySelectorAll('.chip').forEach(chip => {
-            chip.addEventListener('click', () => {
-                document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-                chip.classList.add('active');
-                currentFilter = chip.dataset.comp;
-                render();
-            });
-        });
+        // Event Listeners
+        document.getElementById('compFilter').onchange = (e) => { currentFilter = e.target.value; render(); };
+        document.getElementById('sortOrder').onchange = (e) => { currentSort = e.target.value; render(); };
+        document.getElementById('search').oninput = (e) => { searchQuery = e.target.value; render(); };
 
         render();
     </script>
