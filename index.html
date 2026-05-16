@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FAANG Interview Prep Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+  <header class="header">
+    <div class="header-left">
+      <h1>🎯 FAANG Prep Tracker</h1>
+      <span class="subtitle">Google · Microsoft · Amazon · Apple</span>
+    </div>
+    <div class="header-right">
+      <div class="streak-box">
+        <span class="streak-icon">🔥</span>
+        <span id="streakCount">0</span> day streak
+      </div>
+      <div class="header-date" id="headerDate"></div>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab active" data-tab="dashboard">📊 Dashboard</button>
+    <button class="tab" data-tab="dsa">💻 DSA Problems</button>
+    <button class="tab" data-tab="sysdesign">🏗️ System Design</button>
+    <button class="tab" data-tab="revision">🃏 Revision Cards</button>
+    <button class="tab" data-tab="timeline">📅 Timeline</button>
+    <button class="tab" data-tab="guidance">📖 Guidance</button>
+  </nav>
+
+  <!-- DASHBOARD -->
+  <section id="dashboard" class="panel active">
+    <div class="stats-grid">
+      <div class="stat-card gradient-blue">
+        <div class="stat-icon">💻</div>
+        <div class="stat-value" id="dsaSolved">0</div>
+        <div class="stat-label">DSA Solved</div>
+        <div class="stat-sub" id="dsaTotal">/ 0</div>
+      </div>
+      <div class="stat-card gradient-green">
+        <div class="stat-icon">🏗️</div>
+        <div class="stat-value" id="hldDone">0</div>
+        <div class="stat-label">HLD Systems</div>
+        <div class="stat-sub">/ 25</div>
+      </div>
+      <div class="stat-card gradient-purple">
+        <div class="stat-icon">🔧</div>
+        <div class="stat-value" id="lldDone">0</div>
+        <div class="stat-label">LLD Systems</div>
+        <div class="stat-sub">/ 20</div>
+      </div>
+      <div class="stat-card gradient-orange">
+        <div class="stat-icon">⏱️</div>
+        <div class="stat-value" id="totalHours">0</div>
+        <div class="stat-label">Hours Logged</div>
+        <div class="stat-sub">this week</div>
+      </div>
+    </div>
+
+    <div class="dashboard-row">
+      <div class="card today-card">
+        <h3>📋 Today's Plan</h3>
+        <div id="todayPlan"></div>
+      </div>
+      <div class="card progress-card">
+        <h3>📈 Weekly Progress</h3>
+        <div class="progress-bars" id="weeklyProgress"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>🏢 Company Progress</h3>
+      <div class="company-grid" id="companyProgress"></div>
+    </div>
+
+    <div class="card">
+      <h3>⏱️ Log Study Time</h3>
+      <div class="time-logger">
+        <select id="logCategory">
+          <option value="dsa">DSA</option>
+          <option value="hld">HLD</option>
+          <option value="lld">LLD</option>
+          <option value="behavioral">Behavioral</option>
+          <option value="cs-fundamentals">CS Fundamentals</option>
+        </select>
+        <input type="number" id="logMinutes" placeholder="Minutes" min="1" max="600">
+        <button onclick="logTime()" class="btn btn-primary">Log</button>
+        <button id="toggleTopicsBtn" class="btn btn-outline" style="margin-left: 10px;">Hide Topics</button>
+      </div>
+      <div class="controls" style="margin-top: 15px; display: flex; gap: 10px; align-items: center;">
+        <label for="sortSelect" style="color: var(--text-secondary); font-size: 0.9rem;">Sort By:</label>
+        <select id="sortSelect" class="btn btn-outline" style="background: var(--bg-secondary); color: var(--text-primary); border-color: var(--border-color); padding: 5px 10px;">
+          <option value="default">Default (Company)</option>
+          <option value="freqDesc">Frequency (High to Low)</option>
+          <option value="freqAsc">Frequency (Low to High)</option>
+          <option value="diffAsc">Difficulty (Easy to Hard)</option>
+          <option value="diffDesc">Difficulty (Hard to Easy)</option>
+        </select>
+      </div>
+      <div id="timeLog" class="time-log"></div>
+    </div>
+  </section>
+
+  <!-- DSA PROBLEMS -->
+  <section id="dsa" class="panel">
+    <div class="dsa-controls">
+      <div class="filter-group">
+        <button class="filter-btn active" data-company="all">All</button>
+        <button class="filter-btn amazon" data-company="Amazon">🟠 Amazon</button>
+        <button class="filter-btn google" data-company="Google">🔵 Google</button>
+        <button class="filter-btn microsoft" data-company="Microsoft">🟢 Microsoft</button>
+        <button class="filter-btn apple" data-company="Apple">🔴 Apple</button>
+      </div>
+      <div class="filter-group">
+        <button class="filter-btn active" data-diff="all">All</button>
+        <button class="filter-btn" data-diff="Easy">Easy</button>
+        <button class="filter-btn" data-diff="Medium">Medium</button>
+        <button class="filter-btn" data-diff="Hard">Hard</button>
+      </div>
+      <div class="filter-group">
+        <button class="filter-btn active" data-status="all">All</button>
+        <button class="filter-btn" data-status="unsolved">Unsolved</button>
+        <button class="filter-btn" data-status="solved">Solved ✅</button>
+        <button class="filter-btn" data-status="retry">Retry 🔄</button>
+      </div>
+      <button class="btn btn-accent" onclick="pickRandom()">🎲 Random Problem</button>
+      <button class="btn" style="background:var(--bg3); color:var(--text);" id="toggleTopicsBtn" onclick="toggleTopics()">🙈 Hide Topics</button>
+    </div>
+
+    <div class="problem-timer" id="problemTimer">
+      <div class="timer-display">
+        <span id="timerProblem">No problem selected</span>
+        <span id="timerClock">00:00</span>
+      </div>
+      <div class="timer-controls">
+        <button onclick="startTimer()" class="btn btn-sm">▶️ Start</button>
+        <button onclick="pauseTimer()" class="btn btn-sm">⏸️ Pause</button>
+        <button onclick="resetTimer()" class="btn btn-sm">🔄 Reset</button>
+      </div>
+    </div>
+
+    <div id="problemList" class="problem-list"></div>
+  </section>
+
+  <!-- SYSTEM DESIGN -->
+  <section id="sysdesign" class="panel">
+    <div class="sd-tabs">
+      <button class="sd-tab active" data-sdtab="hld">🔴 HLD (25 Systems)</button>
+      <button class="sd-tab" data-sdtab="lld">🔵 LLD (20 Systems)</button>
+      <button class="sd-tab" data-sdtab="concepts">📚 HLD Concepts</button>
+    </div>
+    <div id="sdContent"></div>
+  </section>
+
+  <!-- REVISION CARDS -->
+  <section id="revision" class="panel">
+    <div class="dsa-controls" style="margin-bottom: 20px;">
+        <div class="filter-group">
+          <button class="filter-btn active" data-rev-company="all">All</button>
+          <button class="filter-btn amazon" data-rev-company="Amazon">Amazon</button>
+          <button class="filter-btn google" data-rev-company="Google">Google</button>
+          <button class="filter-btn microsoft" data-rev-company="Microsoft">Microsoft</button>
+          <button class="filter-btn apple" data-rev-company="Apple">Apple</button>
+        </div>
+        <div class="controls" style="margin-left: auto; display: flex; gap: 10px; align-items: center;">
+          <label for="revSortSelect" style="color: var(--text-secondary); font-size: 0.9rem;">Sort By:</label>
+          <select id="revSortSelect" class="btn btn-outline" style="background: var(--bg-secondary); color: var(--text-primary); border-color: var(--border-color); padding: 5px 10px;">
+            <option value="default">Default</option>
+            <option value="freqDesc">Frequency (High to Low)</option>
+            <option value="freqAsc">Frequency (Low to High)</option>
+            <option value="diffAsc">Difficulty (Easy to Hard)</option>
+            <option value="diffDesc">Difficulty (Hard to Easy)</option>
+          </select>
+          <button class="btn btn-outline" onclick="expandAllCards()">Expand All</button>
+          <button class="btn btn-outline" onclick="collapseAllCards()">Collapse All</button>
+        </div>
+      </div>
+      
+      <div id="revisionList" class="revision-grid"></div>
+  </section>
+
+  <!-- TIMELINE -->
+  <section id="timeline" class="panel">
+    <div id="timelineContent"></div>
+  </section>
+
+  <!-- GUIDANCE -->
+  <section id="guidance" class="panel">
+    <div id="guidanceContent"></div>
+  </section>
+</div>
+
+<div id="modal" class="modal hidden">
+  <div class="modal-content">
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script src="data_revision.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

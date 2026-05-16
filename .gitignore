@@ -1,0 +1,13 @@
+node_modules/
+.DS_Store
+*.log
+.gemini/
+scratch/
+scripts/
+*.csv
+*.py
+build_problems.py
+patch_revision.py
+update_topics.py
+data_revision.js.bak
+data.js.bak
