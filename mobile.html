@@ -336,6 +336,7 @@
         let activeTab = 'dsa';
         let currentFilter = 'all';
         let currentSort = 'default';
+        let currentStatus = 'all';
         let searchQuery = '';
 
         const container = document.getElementById('container');
@@ -363,6 +364,7 @@
             document.getElementById('search').value = '';
             currentFilter = 'all';
             currentSort = 'default';
+            currentStatus = 'all';
             
             if (tab === 'dsa') appTitle.textContent = 'DSA 150';
             if (tab === 'rev') appTitle.textContent = 'Revision Deck';
@@ -376,6 +378,11 @@
             let html = '';
             if (activeTab === 'dsa' || activeTab === 'rev') {
                 html += `
+                    <select id="statusFilter" onchange="currentStatus=this.value; render();">
+                        <option value="all">Status: All</option>
+                        <option value="solved">Solved/Mastered</option>
+                        <option value="unsolved">Unsolved</option>
+                    </select>
                     <select id="compFilter" onchange="currentFilter=this.value; render();">
                         <option value="all">Companies</option>
                         <option value="Google">Google</option>
@@ -421,6 +428,14 @@
                     data = data.filter(c => c.type.toLowerCase() === currentFilter);
                 } else {
                     data = data.filter(c => c.c === currentFilter);
+                }
+            }
+            
+            if (activeTab === 'dsa' || activeTab === 'rev') {
+                if (currentStatus === 'solved') {
+                    data = data.filter(c => state.solved && state.solved[c.t] === 'solved');
+                } else if (currentStatus === 'unsolved') {
+                    data = data.filter(c => !state.solved || state.solved[c.t] !== 'solved');
                 }
             }
             

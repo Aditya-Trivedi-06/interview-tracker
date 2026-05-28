@@ -184,6 +184,11 @@ if ('serviceWorker' in navigator) {
         </div>
         <div class="controls" style="margin-left: auto; display: flex; gap: 10px; align-items: center;">
           <label for="revSortSelect" style="color: var(--text-secondary); font-size: 0.9rem;">Sort By:</label>
+          <select id="revStatusSelect" class="btn btn-outline" style="background: var(--bg-secondary); color: var(--text-primary); border-color: var(--border-color); padding: 5px 10px;">
+            <option value="all">All Status</option>
+            <option value="solved">Mastered</option>
+            <option value="unsolved">Unsolved</option>
+          </select>
           <select id="revSortSelect" class="btn btn-outline" style="background: var(--bg-secondary); color: var(--text-primary); border-color: var(--border-color); padding: 5px 10px;">
             <option value="default">Default</option>
             <option value="freqDesc">Frequency (High to Low)</option>

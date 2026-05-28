@@ -71,6 +71,9 @@ function initFilters() {
   
   const revSortEl = document.getElementById('revSortSelect');
   if (revSortEl) revSortEl.addEventListener('change', (e) => { revFilterSort = e.target.value; renderRevisionCards(); });
+  
+  const revStatusEl = document.getElementById('revStatusSelect');
+  if (revStatusEl) revStatusEl.addEventListener('change', (e) => { revFilterStatus = e.target.value; renderRevisionCards(); });
 }
 
 function toggleTopics() {
@@ -211,7 +214,7 @@ function renderProblems() {
 function markProblem(title, status) {
   if (state.solved[title] === status) delete state.solved[title];
   else state.solved[title] = status;
-  save(); renderProblems(); updateDashboard();
+  save(); renderProblems(); renderRevisionCards(); updateDashboard();
 }
 
 function pickRandom() {
@@ -406,11 +409,14 @@ function renderGuidance() {
 // ========== REVISION CARDS ==========
 let revFilterCompany = 'all';
 let revFilterSort = 'default';
+let revFilterStatus = 'all';
 
 function renderRevisionCards() {
   const el = document.getElementById('revisionList');
   let cards = [...REVISION_CARDS];
   if (revFilterCompany !== 'all') cards = cards.filter(c => c.c === revFilterCompany);
+  if (revFilterStatus === 'solved') cards = cards.filter(c => state.solved[c.t] === 'solved');
+  if (revFilterStatus === 'unsolved') cards = cards.filter(c => state.solved[c.t] !== 'solved');
 
   // Apply sorting for Revision Cards
   cards.sort((a, b) => {
@@ -429,8 +435,10 @@ function renderRevisionCards() {
 
   const colors = {Amazon:'var(--amazon)',Google:'var(--google)',Microsoft:'var(--microsoft)','Apple':'var(--apple)'};
   
-  el.innerHTML = cards.map((c, i) => `
-    <div class="rev-card" id="rev-card-${i}">
+  el.innerHTML = cards.map((c, i) => {
+    const solved = state.solved[c.t] === 'solved';
+    return `
+    <div class="rev-card ${solved ? 'solved' : ''}" id="rev-card-${i}">
       <div class="rev-header">
         <div class="rev-title-area">
           <div class="rev-num">#${i + 1} <span style="color:${colors[c.c]}; margin-left:4px;">● ${c.c}</span></div>
@@ -442,6 +450,9 @@ function renderRevisionCards() {
             <span class="rev-topic-text">${c.tp || 'N/A'}</span>
           </div>
         </div>
+        <button class="btn btn-sm ${solved ? 'btn-primary' : 'btn-outline'}" onclick="markProblem('${c.t.replace(/'/g,"\\'")}','solved'); event.stopPropagation();">
+          ${solved ? '✓ MASTERED' : 'Mark Mastered'}
+        </button>
       </div>
       <div class="rev-body">
         <div class="rev-question"><strong>Q:</strong> ${c.q}</div>
@@ -467,7 +478,7 @@ function renderRevisionCards() {
         </div>
       </div>
     </div>
-  `).join('');
+  `;}).join('');
 }
 
 function toggleRevTopic(btn) {
