@@ -2,13 +2,28 @@
 let state = JSON.parse(localStorage.getItem('prepState')) || {
   solved: {}, sdDone: {}, timeLog: [], streak: 0, lastDate: null, notes: {}
 };
-function save() { localStorage.setItem('prepState', JSON.stringify(state)); }
+function save() { 
+  localStorage.setItem('prepState', JSON.stringify(state)); 
+  if (window.triggerSyncPush) window.triggerSyncPush(state);
+}
 
 // ========== INIT ==========
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('headerDate').textContent = new Date().toLocaleDateString('en-US', {weekday:'long',month:'short',day:'numeric'});
   initTabs(); initFilters(); updateDashboard(); renderProblems(); renderSD('hld'); renderTimeline(); renderGuidance(); renderRevisionCards(); updateStreak();
   if (state.hideTopics) { document.body.classList.add('hide-topics'); document.getElementById('toggleTopicsBtn').textContent = '🐵 Show Topics'; }
+
+  if (window.setupSyncUI) {
+    window.setupSyncUI((cloudState) => {
+      Object.assign(state, cloudState);
+      localStorage.setItem('prepState', JSON.stringify(state));
+      updateDashboard();
+      renderProblems();
+      const activeSdTab = document.querySelector('.sd-tab.active');
+      if (activeSdTab) renderSD(activeSdTab.dataset.sdtab);
+      renderRevisionCards();
+    });
+  }
 });
 
 // ========== TABS ==========
