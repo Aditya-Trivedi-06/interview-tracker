@@ -1,7 +1,10 @@
 // ========== STATE ==========
-let state = JSON.parse(localStorage.getItem('prepState')) || {
-  solved: {}, sdDone: {}, timeLog: [], streak: 0, lastDate: null, notes: {}
-};
+let state = JSON.parse(localStorage.getItem('prepState')) || {};
+if (!state.solved) state.solved = {};
+if (!state.sdDone) state.sdDone = {};
+if (!state.timeLog) state.timeLog = [];
+if (!state.notes) state.notes = {};
+state.streak = state.streak || 0;
 function save() { 
   localStorage.setItem('prepState', JSON.stringify(state)); 
   if (window.triggerSyncPush) window.triggerSyncPush(state);
@@ -16,6 +19,9 @@ document.addEventListener('DOMContentLoaded', () => {
   if (window.setupSyncUI) {
     window.setupSyncUI((cloudState) => {
       Object.assign(state, cloudState);
+      if (!state.solved) state.solved = {};
+      if (!state.sdDone) state.sdDone = {};
+      if (!state.timeLog) state.timeLog = [];
       localStorage.setItem('prepState', JSON.stringify(state));
       updateDashboard();
       renderProblems();

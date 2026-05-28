@@ -330,7 +330,9 @@
     <script src="data_revision.js"></script>
     <script src="sync.js"></script>
     <script>
-        let state = JSON.parse(localStorage.getItem('prepState')) || { solved: {}, sdDone: {} };
+        let state = JSON.parse(localStorage.getItem('prepState')) || {};
+        if (!state.solved) state.solved = {};
+        if (!state.sdDone) state.sdDone = {};
         let activeTab = 'dsa';
         let currentFilter = 'all';
         let currentSort = 'default';
