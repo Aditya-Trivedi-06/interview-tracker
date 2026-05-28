@@ -1,4 +1,4 @@
-const CACHE_NAME = 'faang-tracker-v2';
+const CACHE_NAME = 'faang-tracker-v3';
 const ASSETS = [
   './',
   './index.html',
@@ -8,7 +8,7 @@ const ASSETS = [
   './data_revision.js',
   './sync.js',
   './manifest.json',
-  './revision.html'
+  './mobile.html'
 ];
 
 self.addEventListener('install', (event) => {

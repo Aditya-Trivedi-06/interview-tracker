@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>FAANG Mobile</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <style>
+        :root {
+            --bg: #000000;
+            --card: #111111;
+            --accent: #bb86fc;
+            --text: #ffffff;
+            --text-dim: #a0a0a0;
+            --header-h: 60px;
+            --controls-h: 50px;
+            --nav-h: 65px;
+            --sidebar-w: 280px;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: var(--sidebar-w);
+            background: #0a0a0a;
+            border-right: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: fixed;
+            left: 0; top: 0; bottom: 0;
+            z-index: 1001;
+            transform: translateX(-100%);
+        }
+        .sidebar.active { transform: translateX(0); }
+
+        .sidebar-header { padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .search-box {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 12px 15px;
+            color: white;
+            width: 100%;
+            font-size: 0.95rem;
+        }
+
+        .problem-list { flex: 1; overflow-y: auto; padding: 10px; padding-bottom: env(safe-area-inset-bottom); }
+        .problem-item {
+            padding: 14px 15px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            color: var(--text-dim);
+            cursor: pointer;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .problem-item.active { background: rgba(187, 134, 252, 0.15); color: var(--accent); font-weight: 600; }
+
+        /* MAIN CONTENT */
+        .main { flex: 1; display: flex; flex-direction: column; height: calc(100vh - var(--nav-h)); }
+
+        header {
+            height: var(--header-h);
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #000;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            z-index: 100;
+        }
+
+        .menu-btn { background: none; border: none; color: white; font-size: 1.5rem; padding: 0; cursor: pointer; }
+        h1 { margin: 0; font-size: 1.1rem; font-weight: 800; letter-spacing: -0.5px; }
+
+        .progress-bar {
+            position: absolute;
+            top: var(--header-h);
+            left: 0; width: 100%; height: 3px;
+            background: rgba(255,255,255,0.1);
+            z-index: 101;
+        }
+        .progress-fill { height: 100%; background: var(--accent); transition: width 0.3s; width: 0%; }
+
+        .controls {
+            height: var(--controls-h);
+            padding: 0 15px;
+            background: #000;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            overflow-x: auto;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .controls::-webkit-scrollbar { display: none; }
+        select {
+            background: #111;
+            color: var(--text);
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 6px 10px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+        }
+
+        /* CARD SNAPPING CONTAINER */
+        .cards-container {
+            flex: 1;
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .rev-card {
+            height: calc(100vh - var(--header-h) - var(--controls-h) - var(--nav-h));
+            width: 100%;
+            scroll-snap-align: start;
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+            background: linear-gradient(180deg, #000 0%, #111 100%);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .card-inner {
+            max-height: 100%;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+        .card-inner::-webkit-scrollbar { width: 4px; }
+        .card-inner::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+
+        .badge-group { display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap;}
+        .badge {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            font-weight: 800;
+            padding: 5px 12px;
+            background: rgba(187, 134, 252, 0.15);
+            border-radius: 8px;
+            color: var(--accent);
+            letter-spacing: 0.5px;
+        }
+        .badge.diff { background: rgba(255,255,255,0.1); color: #fff; }
+        .badge.easy { background: rgba(76, 175, 80, 0.15); color: #4caf50; }
+        .badge.medium { background: rgba(255, 152, 0, 0.15); color: #ff9800; }
+        .badge.hard { background: rgba(244, 67, 54, 0.15); color: #f44336; }
+
+        .title { font-size: 1.5rem; font-weight: 800; margin-bottom: 12px; line-height: 1.2; }
+        .question { font-size: 1rem; line-height: 1.6; color: var(--text-dim); margin-bottom: 20px; }
+
+        .reveal-section {
+            margin-top: 10px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 16px;
+            padding: 16px;
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: all 0.3s;
+        }
+        .reveal-section.active { background: rgba(255,255,255,0.06); border-color: rgba(187, 134, 252, 0.3); }
+
+        .reveal-label {
+            font-size: 0.7rem;
+            font-weight: 800;
+            color: var(--accent);
+            margin-bottom: 10px;
+            letter-spacing: 1.5px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .reveal-content {
+            filter: blur(15px);
+            transition: filter 0.4s;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .reveal-section.active .reveal-content { filter: blur(0); }
+        .reveal-section.topic .reveal-content { filter: none; display: none; }
+        .reveal-section.topic.active .reveal-content { display: block; }
+
+        .action-btn {
+            margin-top: 25px;
+            width: 100%;
+            padding: 18px;
+            border-radius: 16px;
+            border: none;
+            background: rgba(255,255,255,0.08);
+            color: var(--text);
+            font-weight: 800;
+            font-size: 1rem;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            display: block;
+        }
+        .action-btn.active { background: #4caf50; color: white; box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3); }
+
+        .lc-link {
+            background: rgba(255, 161, 22, 0.15);
+            color: #ffa116;
+            margin-top: 15px;
+        }
+
+        /* OVERLAY */
+        .overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            display: none;
+            backdrop-filter: blur(8px);
+        }
+        .overlay.active { display: block; }
+
+        .empty-state { text-align: center; padding: 100px 20px; color: var(--text-dim); }
+
+        .scroll-hint {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            opacity: 0.5;
+            animation: bounce 2s infinite;
+        }
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {transform: translateY(0) translateX(-50%);}
+            40% {transform: translateY(-10px) translateX(-50%);}
+            60% {transform: translateY(-5px) translateX(-50%);}
+        }
+
+        /* BOTTOM NAV */
+        .bottom-nav {
+            height: var(--nav-h);
+            background: #0d0d0d;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+        .nav-item {
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 10px;
+            text-align: center;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            opacity: 0.5;
+            transition: all 0.2s;
+        }
+        .nav-item.active {
+            color: var(--accent);
+            opacity: 1;
+        }
+        .nav-icon { font-size: 1.2rem; }
+    </style>
+</head>
+<body>
+    <div class="overlay" id="overlay"></div>
+
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <input type="text" class="search-box" id="search" placeholder="Search...">
+        </div>
+        <div class="problem-list" id="problemList"></div>
+    </aside>
+
+    <div class="main">
+        <header>
+            <button class="menu-btn" id="menuToggle">☰</button>
+            <h1 id="appTitle">DSA 150</h1>
+            <div id="stats" style="font-size: 0.8rem; font-weight: 800; color: var(--accent)">0/150</div>
+        </header>
+
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+
+        <div class="controls" id="controls">
+            <!-- Controls injected dynamically based on tab -->
+        </div>
+
+        <div class="cards-container" id="container"></div>
+    </div>
+
+    <div class="bottom-nav">
+        <div class="nav-item active" data-tab="dsa" onclick="switchTab('dsa')">
+            <span class="nav-icon">💻</span>
+            <span>DSA 150</span>
+        </div>
+        <div class="nav-item" data-tab="rev" onclick="switchTab('rev')">
+            <span class="nav-icon">⚡</span>
+            <span>Revision</span>
+        </div>
+        <div class="nav-item" data-tab="sd" onclick="switchTab('sd')">
+            <span class="nav-icon">🏗️</span>
+            <span>Sys Design</span>
+        </div>
+    </div>
+
+    <script src="data.js"></script>
+    <script src="data_revision.js"></script>
+    <script src="sync.js"></script>
+    <script>
+        let state = JSON.parse(localStorage.getItem('prepState')) || { solved: {}, sdDone: {} };
+        let activeTab = 'dsa';
+        let currentFilter = 'all';
+        let currentSort = 'default';
+        let searchQuery = '';
+
+        const container = document.getElementById('container');
+        const problemList = document.getElementById('problemList');
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+        const progressFill = document.getElementById('progressFill');
+        const appTitle = document.getElementById('appTitle');
+        const controls = document.getElementById('controls');
+
+        function toggleSidebar() {
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+        }
+
+        document.getElementById('menuToggle').onclick = toggleSidebar;
+        overlay.onclick = toggleSidebar;
+
+        function switchTab(tab) {
+            activeTab = tab;
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            document.querySelector(`.nav-item[data-tab="${tab}"]`).classList.add('active');
+            
+            searchQuery = '';
+            document.getElementById('search').value = '';
+            currentFilter = 'all';
+            currentSort = 'default';
+            
+            if (tab === 'dsa') appTitle.textContent = 'DSA 150';
+            if (tab === 'rev') appTitle.textContent = 'Revision Deck';
+            if (tab === 'sd') appTitle.textContent = 'System Design';
+
+            updateControls();
+            render();
+        }
+
+        function updateControls() {
+            let html = '';
+            if (activeTab === 'dsa' || activeTab === 'rev') {
+                html += `
+                    <select id="compFilter" onchange="currentFilter=this.value; render();">
+                        <option value="all">Companies</option>
+                        <option value="Google">Google</option>
+                        <option value="Amazon">Amazon</option>
+                        <option value="Microsoft">Microsoft</option>
+                        <option value="Apple">Apple</option>
+                    </select>
+                `;
+            }
+            if (activeTab === 'sd') {
+                html += `
+                    <select id="compFilter" onchange="currentFilter=this.value; render();">
+                        <option value="all">All Designs</option>
+                        <option value="hld">High Level (HLD)</option>
+                        <option value="lld">Low Level (LLD)</option>
+                    </select>
+                `;
+            }
+            if (activeTab === 'rev') {
+                html += `
+                    <select id="sortOrder" onchange="currentSort=this.value; render();">
+                        <option value="default">Default</option>
+                        <option value="freq">By Frequency</option>
+                        <option value="alpha">A-Z</option>
+                    </select>
+                `;
+            }
+            controls.innerHTML = html;
+        }
+
+        function getFilteredData() {
+            let data = [];
+            if (activeTab === 'dsa') data = [...PROBLEMS];
+            if (activeTab === 'rev') data = [...REVISION_CARDS];
+            if (activeTab === 'sd') {
+                const hld = HLD_SYSTEMS.map((s,i) => ({...s, type: 'HLD', key: 'hld_'+i}));
+                const lld = LLD_SYSTEMS.map((s,i) => ({...s, type: 'LLD', key: 'lld_'+i}));
+                data = [...hld, ...lld];
+            }
+
+            if (currentFilter !== 'all') {
+                if (activeTab === 'sd') {
+                    data = data.filter(c => c.type.toLowerCase() === currentFilter);
+                } else {
+                    data = data.filter(c => c.c === currentFilter);
+                }
+            }
+            
+            if (searchQuery) {
+                const query = searchQuery.toLowerCase();
+                data = data.filter(c => {
+                    const title = (c.t || c.n || '').toLowerCase();
+                    return title.includes(query);
+                });
+            }
+
+            if (activeTab === 'rev') {
+                if (currentSort === 'freq') data.sort((a,b) => b.f - a.f);
+                else if (currentSort === 'alpha') data.sort((a,b) => a.t.localeCompare(b.t));
+            }
+
+            return data;
+        }
+
+        function render() {
+            const filtered = getFilteredData();
+
+            // Render Sidebar List
+            problemList.innerHTML = filtered.map(c => `
+                <div class="problem-item" onclick="jumpTo('${(c.t || c.n).replace(/\s+/g, '-')}')">${c.t || c.n}</div>
+            `).join('');
+
+            // Render Full-Screen Cards
+            container.innerHTML = filtered.map((c, i) => {
+                const id = 'card-' + (c.t || c.n).replace(/\s+/g, '-');
+                const isLast = i === filtered.length - 1;
+                const hint = !isLast ? '<div class="scroll-hint">Swipe up ▾</div>' : '';
+
+                if (activeTab === 'dsa') {
+                    const solved = state.solved[c.t] === 'solved';
+                    const diffCls = c.d.toLowerCase();
+                    return `
+                    <div class="rev-card" id="${id}">
+                        <div class="card-inner">
+                            <div class="badge-group">
+                                <span class="badge">${c.c}</span>
+                                <span class="badge diff ${diffCls}">${c.d}</span>
+                                <span class="badge diff">${c.f}% Freq</span>
+                            </div>
+                            <div class="title">${c.t}</div>
+                            <div class="question" style="margin-bottom: 10px;">Topic: ${c.tp}</div>
+                            
+                            <a href="${c.l}" target="_blank" class="action-btn lc-link">↗ Open in LeetCode</a>
+
+                            <button class="action-btn ${solved ? 'active' : ''}" 
+                                    onclick="toggleDsaSolved('${c.t.replace(/'/g, "\'")}', this)">
+                                ${solved ? '✓ SOLVED' : 'MARK AS SOLVED'}
+                            </button>
+                        </div>
+                        ${hint}
+                    </div>`;
+                }
+                
+                if (activeTab === 'rev') {
+                    const solved = state.solved[c.t] === 'solved';
+                    return `
+                    <div class="rev-card" id="${id}">
+                        <div class="card-inner">
+                            <div class="badge-group">
+                                <span class="badge">${c.c}</span>
+                                <span class="badge diff">${c.f}% Freq</span>
+                            </div>
+                            <div class="title">${c.t}</div>
+                            <div class="question">${c.q || 'Problem logic details...'}</div>
+                            
+                            <div class="reveal-section topic" onclick="this.classList.toggle('active')">
+                                <div class="reveal-label">DOMAIN <span>VIEW</span></div>
+                                <div class="reveal-content" style="font-weight: 700; color: #fff;">${c.tp || 'Arrays & Strings'}</div>
+                            </div>
+
+                            <div class="reveal-section" onclick="this.classList.toggle('active')">
+                                <div class="reveal-label">OPTIMAL STRATEGY <span>REVEAL</span></div>
+                                <div class="reveal-content">${c.optimal || 'No data.'}</div>
+                            </div>
+
+                            <div class="reveal-section" onclick="this.classList.toggle('active')">
+                                <div class="reveal-label">INTERVIEW FOLLOW-UP <span>REVEAL</span></div>
+                                <div class="reveal-content">${c.followup || 'No data.'}</div>
+                            </div>
+
+                            <button class="action-btn ${solved ? 'active' : ''}" 
+                                    onclick="toggleDsaSolved('${c.t.replace(/'/g, "\'")}', this)">
+                                ${solved ? '✓ MASTERED' : 'MARK AS MASTERED'}
+                            </button>
+                        </div>
+                        ${hint}
+                    </div>`;
+                }
+
+                if (activeTab === 'sd') {
+                    const done = state.sdDone[c.key];
+                    return `
+                    <div class="rev-card" id="${id}">
+                        <div class="card-inner">
+                            <div class="badge-group">
+                                <span class="badge">${c.type}</span>
+                                ${c.tags.map(t => `<span class="badge diff">${t}</span>`).join('')}
+                            </div>
+                            <div class="title">${c.n}</div>
+                            <div class="question">${c.d}</div>
+                            
+                            <button class="action-btn ${done ? 'active' : ''}" 
+                                    onclick="toggleSdDone('${c.key}', this)">
+                                ${done ? '✓ COMPLETED' : 'MARK COMPLETED'}
+                            </button>
+                        </div>
+                        ${hint}
+                    </div>`;
+                }
+            }).join('');
+
+            if (filtered.length === 0) {
+                container.innerHTML = '<div class="empty-state">No matching cards found.</div>';
+            }
+
+            updateStats(filtered.length);
+            updateProgress();
+        }
+
+        function jumpTo(idSuffix) {
+            toggleSidebar();
+            const el = document.getElementById('card-' + idSuffix);
+            if (el) el.scrollIntoView({ behavior: 'auto', block: 'start' });
+        }
+
+        function toggleDsaSolved(title, btn) {
+            if (!state.solved) state.solved = {};
+            if (state.solved[title] === 'solved') {
+                delete state.solved[title];
+                btn.classList.remove('active');
+                btn.textContent = activeTab === 'rev' ? 'MARK AS MASTERED' : 'MARK AS SOLVED';
+            } else {
+                state.solved[title] = 'solved';
+                btn.classList.add('active');
+                btn.textContent = activeTab === 'rev' ? '✓ MASTERED' : '✓ SOLVED';
+            }
+            saveState();
+        }
+
+        function toggleSdDone(key, btn) {
+            if (!state.sdDone) state.sdDone = {};
+            if (state.sdDone[key]) {
+                state.sdDone[key] = false;
+                btn.classList.remove('active');
+                btn.textContent = 'MARK COMPLETED';
+            } else {
+                state.sdDone[key] = true;
+                btn.classList.add('active');
+                btn.textContent = '✓ COMPLETED';
+            }
+            saveState();
+        }
+
+        function saveState() {
+            localStorage.setItem('prepState', JSON.stringify(state));
+            if (window.triggerSyncPush) window.triggerSyncPush(state);
+            updateStats();
+        }
+
+        function updateStats(totalOverride) {
+            let solvedCount = 0;
+            let total = 0;
+            
+            if (activeTab === 'dsa') {
+                solvedCount = PROBLEMS.filter(c => state.solved && state.solved[c.t] === 'solved').length;
+                total = PROBLEMS.length;
+            } else if (activeTab === 'rev') {
+                solvedCount = REVISION_CARDS.filter(c => state.solved && state.solved[c.t] === 'solved').length;
+                total = REVISION_CARDS.length;
+            } else if (activeTab === 'sd') {
+                const totalSd = HLD_SYSTEMS.length + LLD_SYSTEMS.length;
+                solvedCount = Object.keys(state.sdDone || {}).filter(k => state.sdDone[k]).length;
+                total = totalSd;
+            }
+
+            document.getElementById('stats').textContent = `${solvedCount}/${total}`;
+        }
+
+        function updateProgress() {
+            const currentScroll = container.scrollTop;
+            const totalScroll = container.scrollHeight - container.clientHeight;
+            const progress = totalScroll > 0 ? (currentScroll / totalScroll) * 100 : 0;
+            progressFill.style.width = (progress || 0) + '%';
+        }
+
+        container.onscroll = updateProgress;
+        document.getElementById('search').oninput = (e) => { searchQuery = e.target.value; render(); };
+
+        updateControls();
+        render();
+
+        if (window.setupSyncUI) {
+            window.setupSyncUI((cloudState) => {
+                state = Object.assign({}, state, cloudState);
+                if (!state.solved) state.solved = {};
+                if (!state.sdDone) state.sdDone = {};
+                localStorage.setItem('prepState', JSON.stringify(state));
+                render();
+            });
+        }
+    </script>
+</body>
+</html>
